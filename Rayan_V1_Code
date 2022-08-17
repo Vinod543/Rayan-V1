@@ -1,0 +1,68 @@
+#include <Servo.h>
+
+#define ARRAY_SIZE 5 //set the size of the array
+#define THRESHOLD 30 //set the threshold value for the hand
+
+
+//defining terms for low pass filters
+int index = 0;
+int value = 0;
+int sum = 0;
+int readings[ARRAY_SIZE]; //ARRAY FOR STORING VALUES
+int averaged = 0;
+
+
+//creating linear actuator objects
+Servo actuator1;
+Servo actuator2;
+Servo actuator3;
+
+
+void setup() 
+{
+  Serial.begin(9600);
+
+  //attach the servos to the appropriate locations
+  actuator1.attach(7);
+  actuator2.attach(8);
+  actuator3.attach(9);
+}
+
+void loop() 
+{
+  //update the total sum value
+  sum = sum + readings[index]; 
+  
+  //read data from the myo
+  int rawMyoVals = analogRead(A6);
+  
+  //perform rolling average
+  readings[index] = rawMyoVals; //append the raw reading to the array
+  sum = sum + rawMyoVals; //update the sum
+  index = (index+1) % ARRAY_SIZE; //update the index and have it loop back to 0 if it is larger than the array length
+
+  averaged = sum / ARRAY_SIZE; //calculate the average alue
+
+  Serial.print("Averaged Myo Val: ");
+  Serial.println(averaged);
+  
+
+  //retracts the servos if the the signal from the user is large enough
+  
+  if(averaged > THRESHOLD)
+  {
+    actuator1.writeMicroseconds(2000); //retracts the arm
+    actuator2.writeMicroseconds(2000); //retracts the arm
+    actuator3.writeMicroseconds(2000); //retracts the arm 
+  }
+  else
+  {
+    actuator1.writeMicroseconds(1000); //extends the arm
+    actuator2.writeMicroseconds(1000);//extends the arm
+    actuator3.writeMicroseconds(1000); //extends the arm
+
+  }
+
+
+
+}
